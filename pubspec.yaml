@@ -1,5 +1,5 @@
 name: stt_llm_demo
-description: "This project is to creat a demo of a Speech to Text to Large Language Model pipeline"
+description: "This project is to create a demo of a Speech to Text to Large Language Model pipeline"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
