@@ -1,0 +1,15 @@
+{
+  "originHash" : "9cb7ef1f813139da94deaa44c0cfd1ce1f6234db376559fa89752bbfae2a6430",
+  "pins" : [
+    {
+      "identity" : "whispercore_ios_swift_package",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/EberronBruce/WhisperCore_iOS_Swift_Package.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "acb17618e3c463cce6ec513ddd1426752cdfc8d2"
+      }
+    }
+  ],
+  "version" : 3
+}
