@@ -24,7 +24,7 @@ class Whisper {
       switch (type) {
         case 'didTranscribe':
           final text = event['text'] ?? '';
-          onEvent("📝 Transcription: $text");
+          onEvent(text);
           break;
 
         case 'recordingFailed':
@@ -43,12 +43,12 @@ class Whisper {
     });
   }
 
-  Future<String?> playSampleAudio() async {
-    if (!await WhisperFlutterBridge.canTranscribe()) return null;
+  Future<bool> playSampleAudio() async {
+    if (!await WhisperFlutterBridge.canTranscribe()) return false;
     WhisperFlutterBridge.enablePlayback(true);
     final samplePath = await getSampleAudioPath();
     await WhisperFlutterBridge.transcribeSample(samplePath);
-    return "Sample audio transcribed successfully";
+    return true;
   }
 
   Future<RecordingResult> toggleRecording() async {

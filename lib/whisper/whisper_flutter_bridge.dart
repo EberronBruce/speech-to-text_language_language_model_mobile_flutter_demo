@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
@@ -91,55 +92,31 @@ class WhisperFlutterBridge {
 }
 
 Future<String> getModelFilePath() async {
-  try {
-    const assetPath = 'assets/models/whisper/ggml-base.en.bin';
-    print('Copying model from assets to $assetPath');
-    final outputPath =
-        '${(await getApplicationDocumentsDirectory()).path}/ggml-base.en.bin';
-    print('Output path: $outputPath');
-    final outFile = File(outputPath);
-    print('Output file: $outFile');
-
-    if (await outFile.exists()) {
-      print('Model already exists at $outputPath');
-      return outputPath;
-    }
-
-    print('Copying model from assets to $outputPath');
-
-    final byteData = await rootBundle.load(
-      assetPath,
-    ); // <-- Only this part loads to memory
-    print('Model loaded from assets: $byteData');
-    final buffer = byteData.buffer;
-    print('Model buffer created: $buffer');
-    await outFile.writeAsBytes(
-      buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes),
-      flush: true,
-    );
-
-    print('Model copied to $outputPath');
-    print('Model copied successfully');
-    return outputPath;
-  } catch (e) {
-    print('Error copying model: $e');
-    rethrow;
-  }
+  return await copyAssetToDocuments(
+    assetPath: 'assets/models/whisper/ggml-base.en.bin',
+    outputFileName: 'ggml-base.en.bin',
+  );
 }
 
 Future<String> getSampleAudioPath() async {
+  return await copyAssetToDocuments(
+    assetPath: 'assets/models/whisper/jfk.wav',
+    outputFileName: 'jfk.wav',
+  );
+}
+
+Future<String> copyAssetToDocuments({
+  required String assetPath,
+  required String outputFileName,
+}) async {
   try {
-    const assetPath = 'assets/models/whisper/jfk.wav';
     final outputPath =
-        '${(await getApplicationDocumentsDirectory()).path}/jfk.wav';
+        '${(await getApplicationDocumentsDirectory()).path}/$outputFileName';
     final outFile = File(outputPath);
 
     if (await outFile.exists()) {
-      print('Sample audio already exists at $outputPath');
       return outputPath;
     }
-
-    print('Copying sample audio to $outputPath');
 
     final byteData = await rootBundle.load(assetPath);
     final buffer = byteData.buffer;
@@ -149,10 +126,11 @@ Future<String> getSampleAudioPath() async {
       flush: true,
     );
 
-    print('Sample audio copied successfully');
     return outputPath;
   } catch (e) {
-    print('Error copying sample audio: $e');
+    if (kDebugMode) {
+      print('Error copying $outputFileName: $e');
+    }
     rethrow;
   }
 }
