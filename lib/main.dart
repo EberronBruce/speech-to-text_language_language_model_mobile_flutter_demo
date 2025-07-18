@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stt_llm_demo/bridges/whisper_flutter_bridge.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,9 +34,42 @@ class _MyHomePageState extends State<MyHomePage> {
   final ScrollController scrollController =
       ScrollController(); // For auto scrolling
 
-  void addMessage() {
+  @override
+  void initState() {
+    super.initState();
+    _requestMicrophonePermission();
+
+    _loadModelOnStartup();
+  }
+
+  void _requestMicrophonePermission() {
+    WhisperFlutterBridge.callRequestRecordPermission();
+  }
+
+  Future<void> _loadModelOnStartup() async {
+    // Assume you have a function to get the model path (like from assets)
+    final modelPath = await getModelFilePath();
+
+    try {
+      final success = await WhisperFlutterBridge.initializeModel(modelPath);
+      if (success) {
+        print('Model initialized successfully');
+        addMessage("Model initialized successfully");
+
+        _listenToEvents(); // 👈 Add this line here
+      } else {
+        print('Failed to initialize model');
+        addMessage("Failed to initialize model");
+      }
+    } catch (e) {
+      print('Error initializing model: $e');
+      addMessage("Error initializing model: $e");
+    }
+  }
+
+  void addMessage(String message) {
     setState(() {
-      messages.add('You hit me');
+      messages.add(message);
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -48,6 +82,43 @@ class _MyHomePageState extends State<MyHomePage> {
         );
       }
     });
+  }
+
+  void _listenToEvents() {
+    WhisperFlutterBridge.events.listen((event) {
+      final type = event['event'];
+      switch (type) {
+        case 'didTranscribe':
+          final text = event['text'] ?? '';
+          print("📝 Transcription: $text");
+          addMessage("Transcription: $text");
+          break;
+
+        case 'recordingFailed':
+          final error = event['error'] ?? 'Unknown';
+          print("❌ Recording failed: $error");
+          addMessage("Recording failed: $error");
+          break;
+
+        case 'failedToTranscribe':
+          final error = event['error'] ?? 'Unknown';
+          print("❌ Transcription failed: $error");
+          addMessage("Transcription failed: $error");
+          break;
+
+        default:
+          print("📢 Unknown event: $event");
+          addMessage("Unknown event: $event");
+      }
+    });
+  }
+
+  void _toggleRecording() async {
+    WhisperFlutterBridge.enablePlayback(true);
+    final samplePath = await getSampleAudioPath();
+    await WhisperFlutterBridge.transcribeSample(samplePath);
+    print("Sample audio transcribed successfully");
+    addMessage("Sample audio transcribed successfully");
   }
 
   @override
@@ -65,7 +136,7 @@ class _MyHomePageState extends State<MyHomePage> {
       child: FloatingActionButton(
         backgroundColor: Colors.red,
         foregroundColor: Colors.white,
-        onPressed: addMessage,
+        onPressed: _toggleRecording,
         tooltip: 'Get Message',
         child: const Icon(Icons.record_voice_over),
       ),
