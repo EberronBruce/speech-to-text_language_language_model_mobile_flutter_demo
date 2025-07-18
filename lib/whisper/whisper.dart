@@ -9,14 +9,11 @@ class Whisper {
     try {
       final success = await WhisperFlutterBridge.initializeModel(modelPath);
       if (success) {
-        print('Model initialized successfully');
         return "Model initialized successfully";
       } else {
-        print('Failed to initialize model');
         return "Failed to initialize model";
       }
     } catch (e) {
-      print('Error initializing model: $e');
       return "Error initializing model: $e";
     }
   }
@@ -27,25 +24,21 @@ class Whisper {
       switch (type) {
         case 'didTranscribe':
           final text = event['text'] ?? '';
-          print("📝 Transcription: $text");
-          onEvent("Transcription: $text");
+          onEvent("📝 Transcription: $text");
           break;
 
         case 'recordingFailed':
           final error = event['error'] ?? 'Unknown';
-          print("❌ Recording failed: $error");
-          onEvent("Recording failed: $error");
+          onEvent("❌ Recording failed: $error");
           break;
 
         case 'failedToTranscribe':
           final error = event['error'] ?? 'Unknown';
-          print("❌ Transcription failed: $error");
-          onEvent("Transcription failed: $error");
+          onEvent("❌ Transcription failed: $error");
           break;
 
         default:
-          print("📢 Unknown event: $event");
-          onEvent("Unknown event: $event");
+          onEvent("📢 Unknown event: $event");
       }
     });
   }
@@ -55,7 +48,6 @@ class Whisper {
     WhisperFlutterBridge.enablePlayback(true);
     final samplePath = await getSampleAudioPath();
     await WhisperFlutterBridge.transcribeSample(samplePath);
-    print("Sample audio transcribed successfully");
     return "Sample audio transcribed successfully";
   }
 

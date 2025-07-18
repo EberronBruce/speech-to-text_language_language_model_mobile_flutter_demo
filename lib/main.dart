@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stt_llm_demo/whisper/whisper.dart';
+import 'dart:io';
 
 void main() {
   runApp(const MyApp());
@@ -42,7 +43,11 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    _initWhisper();
+    if (Platform.isIOS) {
+      _initWhisper();
+    } else {
+      addMessage("This app only works on iOS for now");
+    }
   }
 
   Future<void> _initWhisper() async {
@@ -74,7 +79,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _toggleRecording() async {
-    print("_toggleRecording() called");
     final result = await _whisper.toggleRecording();
     setState(() {
       _isRecording = result.isRecording;
@@ -82,7 +86,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _transcribeSampleAudio() async {
-    print("_transcribeSampleAudio() called");
     String? result = await _whisper.playSampleAudio();
     if (result != null) {
       addMessage(result);
