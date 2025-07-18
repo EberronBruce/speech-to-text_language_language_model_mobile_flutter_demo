@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stt_llm_demo/bridges/whisper_flutter_bridge.dart';
+import 'package:stt_llm_demo/whisper/whisper.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,41 +30,30 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  bool _isLoading = true;
   final List<String> messages = [];
   final ScrollController scrollController =
       ScrollController(); // For auto scrolling
 
+  final Whisper _whisper = Whisper();
+
+  bool _isRecording = false;
+
   @override
   void initState() {
     super.initState();
-    _requestMicrophonePermission();
-
-    _loadModelOnStartup();
+    _initWhisper();
   }
 
-  void _requestMicrophonePermission() {
-    WhisperFlutterBridge.callRequestRecordPermission();
-  }
-
-  Future<void> _loadModelOnStartup() async {
-    // Assume you have a function to get the model path (like from assets)
-    final modelPath = await getModelFilePath();
-
-    try {
-      final success = await WhisperFlutterBridge.initializeModel(modelPath);
-      if (success) {
-        print('Model initialized successfully');
-        addMessage("Model initialized successfully");
-
-        _listenToEvents(); // 👈 Add this line here
-      } else {
-        print('Failed to initialize model');
-        addMessage("Failed to initialize model");
-      }
-    } catch (e) {
-      print('Error initializing model: $e');
-      addMessage("Error initializing model: $e");
-    }
+  Future<void> _initWhisper() async {
+    String loadedMessage = await _whisper.loadModelOnStartup();
+    addMessage(loadedMessage);
+    _whisper.listenToEvents((message) {
+      addMessage(message);
+    });
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   void addMessage(String message) {
@@ -84,41 +73,22 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _listenToEvents() {
-    WhisperFlutterBridge.events.listen((event) {
-      final type = event['event'];
-      switch (type) {
-        case 'didTranscribe':
-          final text = event['text'] ?? '';
-          print("📝 Transcription: $text");
-          addMessage("Transcription: $text");
-          break;
-
-        case 'recordingFailed':
-          final error = event['error'] ?? 'Unknown';
-          print("❌ Recording failed: $error");
-          addMessage("Recording failed: $error");
-          break;
-
-        case 'failedToTranscribe':
-          final error = event['error'] ?? 'Unknown';
-          print("❌ Transcription failed: $error");
-          addMessage("Transcription failed: $error");
-          break;
-
-        default:
-          print("📢 Unknown event: $event");
-          addMessage("Unknown event: $event");
-      }
+  _toggleRecording() async {
+    print("_toggleRecording() called");
+    final result = await _whisper.toggleRecording();
+    setState(() {
+      _isRecording = result.isRecording;
     });
   }
 
-  void _toggleRecording() async {
-    WhisperFlutterBridge.enablePlayback(true);
-    final samplePath = await getSampleAudioPath();
-    await WhisperFlutterBridge.transcribeSample(samplePath);
-    print("Sample audio transcribed successfully");
-    addMessage("Sample audio transcribed successfully");
+  _transcribeSampleAudio() async {
+    print("_transcribeSampleAudio() called");
+    String? result = await _whisper.playSampleAudio();
+    if (result != null) {
+      addMessage(result);
+    } else {
+      addMessage("Unable to transcribe sample audio right now");
+    }
   }
 
   @override
@@ -129,63 +99,110 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Define the FAB here so we can potentially get its size if needed,
-    // or just for cleaner code.
-    final Widget floatingActionButton = Transform.scale(
-      scale: 1.5,
-      child: FloatingActionButton(
-        backgroundColor: Colors.red,
-        foregroundColor: Colors.white,
-        onPressed: _toggleRecording,
-        tooltip: 'Get Message',
-        child: const Icon(Icons.record_voice_over),
-      ),
-    );
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: Text(widget.title),
+        ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("Models are Loading...", style: TextStyle(fontSize: 25.0)),
+              CircularProgressIndicator(),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: Column(
-        // Use a Column to separate the text box from other potential UI elements
-        children: [
-          Expanded(
-            // Make the text box take available space
-            child: Container(
-              margin: const EdgeInsets.all(
-                16.0,
-              ), // Add some margin around the box
-              padding: const EdgeInsets.all(
-                8.0,
-              ), // Add some padding inside the box
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade400), // Add a border
-                borderRadius: BorderRadius.circular(8.0), // Rounded corners
-              ),
-              child: ListView.builder(
-                controller: scrollController, // Assign the scroll controller
-                itemCount: messages.length, // Number of items in our list
-                itemBuilder: (context, index) {
-                  // Display each message from the list
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 4.0,
-                    ), // Some spacing
-                    child: Text(
-                      messages[index],
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  );
-                },
+      body: SafeArea(
+        child: Column(
+          // Use a Column to separate the text box from other potential UI elements
+          children: [
+            Expanded(
+              // Make the text box take available space
+              child: Container(
+                margin: const EdgeInsets.all(
+                  16.0,
+                ), // Add some margin around the box
+                padding: const EdgeInsets.all(
+                  8.0,
+                ), // Add some padding inside the box
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.grey.shade400,
+                  ), // Add a border
+                  borderRadius: BorderRadius.circular(8.0), // Rounded corners
+                ),
+                child: ListView.builder(
+                  controller: scrollController, // Assign the scroll controller
+                  itemCount: messages.length, // Number of items in our list
+                  itemBuilder: (context, index) {
+                    // Display each message from the list
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 4.0,
+                      ), // Some spacing
+                      child: Text(
+                        messages[index],
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
-          ),
-          // You could add other widgets here if needed, below the text box
-        ],
+            // You could add other widgets here if needed, below the text box
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: _transcribeSampleAudio,
+                  icon: Icon(Icons.audiotrack),
+                  label: Text("Sample", style: TextStyle(fontSize: 20.0)),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 20.0,
+                    ),
+                    backgroundColor: Colors.indigo,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _toggleRecording,
+                  icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+                  label: Text(
+                    _isRecording ? "Stop" : "Record",
+                    style: TextStyle(fontSize: 20.0),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 20.0,
+                    ),
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-      floatingActionButton: floatingActionButton,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
