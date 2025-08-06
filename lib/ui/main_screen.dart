@@ -54,9 +54,46 @@ class _MainScreenState extends State<MainScreen> {
       sender: Sender.system.label,
       isAI: false,
     );
-    _whisper.listenToEvents((message) {
-      addMessage(message: message, sender: Sender.whisper.label, isAI: true);
-    });
+    // _whisper.listenToEvents((message) {
+    //   addMessage(message: message, sender: Sender.whisper.label, isAI: true);
+    // });
+    _whisper.listenToEvents(
+      onTranscribe: (text) {
+        addMessage(message: text, sender: Sender.whisper.label, isAI: true);
+      },
+      onTranscriptionFailed: (error) {
+        addMessage(
+          message: "[Error] $error",
+          sender: Sender.system.label,
+          isAI: false,
+        );
+      },
+      onRecordingFailed: (error) {
+        addMessage(
+          message: "[Error] $error",
+          sender: Sender.system.label,
+          isAI: false,
+        );
+      },
+      onStartRecording: () {
+        setState(() {
+          _isRecording = true;
+        });
+      },
+      onStopRecording: () {
+        setState(() {
+          _isRecording = false;
+        });
+      },
+      onUnknown: (event) {
+        addMessage(
+          message: "[Unknown event] $event",
+          sender: Sender.system.label,
+          isAI: false,
+        );
+      },
+    );
+
     setState(() {
       _isLoading = false;
     });
@@ -85,9 +122,6 @@ class _MainScreenState extends State<MainScreen> {
 
   _toggleRecording() async {
     final result = await _whisper.toggleRecording();
-    setState(() {
-      _isRecording = result.isRecording;
-    });
   }
 
   _transcribeSampleAudio() async {

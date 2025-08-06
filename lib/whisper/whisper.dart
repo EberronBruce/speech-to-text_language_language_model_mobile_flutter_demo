@@ -18,27 +18,78 @@ class Whisper {
     }
   }
 
-  void listenToEvents(Function(String) onEvent) {
+  // void listenToEvents(Function(String) onEvent) {
+  //   WhisperFlutterBridge.events.listen((event) {
+  //     final type = event['event'];
+  //     switch (type) {
+  //       case 'didTranscribe':
+  //         final text = event['text'] ?? '';
+  //         onEvent(text);
+  //         break;
+  //
+  //       case 'recordingFailed':
+  //         final error = event['error'] ?? 'Unknown';
+  //         onEvent("❌ Recording failed: $error");
+  //         break;
+  //
+  //       case 'failedToTranscribe':
+  //         final error = event['error'] ?? 'Unknown';
+  //         onEvent("❌ Transcription failed: $error");
+  //         break;
+  //
+  //       case 'didStartRecording':
+  //         final recording = event['isRecording'] ?? 'Unknown';
+  //         onEvent(recording);
+  //         break;
+  //
+  //       case 'didStopRecording':
+  //         final recording = event['isRecording'] ?? 'Unknown';
+  //         onEvent(recording);
+  //         break;
+  //
+  //       default:
+  //         onEvent("📢 Unknown event: $event");
+  //     }
+  //   });
+  // }
+
+  void listenToEvents({
+    void Function(String text)? onTranscribe,
+    void Function(String error)? onRecordingFailed,
+    void Function(String error)? onTranscriptionFailed,
+    void Function()? onStartRecording,
+    void Function()? onStopRecording,
+    void Function(dynamic raw)? onUnknown,
+  }) {
     WhisperFlutterBridge.events.listen((event) {
       final type = event['event'];
+
       switch (type) {
         case 'didTranscribe':
           final text = event['text'] ?? '';
-          onEvent(text);
+          onTranscribe?.call(text);
           break;
 
         case 'recordingFailed':
           final error = event['error'] ?? 'Unknown';
-          onEvent("❌ Recording failed: $error");
+          onRecordingFailed?.call(error);
           break;
 
         case 'failedToTranscribe':
           final error = event['error'] ?? 'Unknown';
-          onEvent("❌ Transcription failed: $error");
+          onTranscriptionFailed?.call(error);
+          break;
+
+        case 'didStartRecording':
+          onStartRecording?.call();
+          break;
+
+        case 'didStopRecording':
+          onStopRecording?.call();
           break;
 
         default:
-          onEvent("📢 Unknown event: $event");
+          onUnknown?.call(event);
       }
     });
   }

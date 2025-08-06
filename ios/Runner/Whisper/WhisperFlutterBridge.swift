@@ -26,6 +26,7 @@ fileprivate enum WhisperMethods: String {
 
 @MainActor
 class WhisperFlutterBridge: NSObject, WhisperDelegate {
+    
     static let shared = WhisperFlutterBridge()
     
     private let whisper = Whisper()
@@ -134,7 +135,7 @@ class WhisperFlutterBridge: NSObject, WhisperDelegate {
         
     }
 
-    // Called when recording fails
+//     Called when recording fails
     nonisolated func recordingFailed(_ error: Error) {
         Task { @MainActor in
             eventSink?(["event": "recordingFailed", "error": error.localizedDescription])
@@ -145,6 +146,19 @@ class WhisperFlutterBridge: NSObject, WhisperDelegate {
     nonisolated func failedToTranscribe(_ error: Error) {
         Task { @MainActor in
             eventSink?(["event": "failedToTranscribe", "error": error.localizedDescription])
+        }
+    }
+    
+    
+    nonisolated func didStartRecording() {
+        Task{ @MainActor in
+            eventSink?(["event": "didStartRecording", "isRecording": true ])
+        }
+    }
+    
+    nonisolated func didStopRecording() {
+        Task{ @MainActor in
+            eventSink?(["event": "didStopRecording", "isRecording": false ])
         }
     }
 

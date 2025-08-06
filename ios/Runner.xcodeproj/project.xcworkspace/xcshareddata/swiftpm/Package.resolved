@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/EberronBruce/WhisperCore_iOS_Swift_Package.git",
       "state" : {
-        "branch" : "master",
-        "revision" : "acb17618e3c463cce6ec513ddd1426752cdfc8d2"
+        "revision" : "61ed1018660f45dba36294e961e960388dbe067f",
+        "version" : "1.0.2"
       }
     }
   ],

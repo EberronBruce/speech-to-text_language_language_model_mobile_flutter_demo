@@ -16,6 +16,8 @@
 		7A9CBD572E28AF2400DE5FFC /* ggml-base.en-encoder.mlmodelc in Resources */ = {isa = PBXBuildFile; fileRef = 7A9CBD552E28AF2400DE5FFC /* ggml-base.en-encoder.mlmodelc */; };
 		7A9CBD592E28B14B00DE5FFC /* WhisperFlutterBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A9CBD582E28B14300DE5FFC /* WhisperFlutterBridge.swift */; };
 		7A9CBD5C2E296E2A00DE5FFC /* WhisperCore in Frameworks */ = {isa = PBXBuildFile; productRef = 7A9CBD5B2E296E2A00DE5FFC /* WhisperCore */; };
+		7AF4C2402E42E5ED00D07DEC /* WhisperCore in Frameworks */ = {isa = PBXBuildFile; productRef = 7AF4C23F2E42E5ED00D07DEC /* WhisperCore */; };
+		7AF4C2872E42EBD700D07DEC /* WhisperCore in Frameworks */ = {isa = PBXBuildFile; productRef = 7AF4C2862E42EBD700D07DEC /* WhisperCore */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
@@ -79,6 +81,8 @@
 			files = (
 				7A9CBD5C2E296E2A00DE5FFC /* WhisperCore in Frameworks */,
 				235CF438F47EEEDFCFCBC8B3 /* Pods_Runner.framework in Frameworks */,
+				7AF4C2872E42EBD700D07DEC /* WhisperCore in Frameworks */,
+				7AF4C2402E42E5ED00D07DEC /* WhisperCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -177,7 +181,6 @@
 				0AE157FF2568525D5775830B /* Pods-RunnerTests.release.xcconfig */,
 				887D05C628A17C68A8C83558 /* Pods-RunnerTests.profile.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -255,7 +258,7 @@
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
 			packageReferences = (
-				7A9CBD5D2E29ABF300DE5FFC /* XCRemoteSwiftPackageReference "WhisperCore_iOS_Swift_Package" */,
+				7AF4C2852E42EBD700D07DEC /* XCRemoteSwiftPackageReference "WhisperCore_iOS_Swift_Package" */,
 			);
 			productRefGroup = 97C146EF1CF9000F007C117D /* Products */;
 			projectDirPath = "";
@@ -763,12 +766,20 @@
 				kind = branch;
 			};
 		};
-		7A9CBD5D2E29ABF300DE5FFC /* XCRemoteSwiftPackageReference "WhisperCore_iOS_Swift_Package" */ = {
+		7AF4C23E2E42E5ED00D07DEC /* XCRemoteSwiftPackageReference "WhisperCore_iOS_Swift_Package" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/EberronBruce/WhisperCore_iOS_Swift_Package.git";
 			requirement = {
 				branch = master;
 				kind = branch;
+			};
+		};
+		7AF4C2852E42EBD700D07DEC /* XCRemoteSwiftPackageReference "WhisperCore_iOS_Swift_Package" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/EberronBruce/WhisperCore_iOS_Swift_Package.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.2;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -777,6 +788,16 @@
 		7A9CBD5B2E296E2A00DE5FFC /* WhisperCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 7A9CBD522E28AEB400DE5FFC /* XCRemoteSwiftPackageReference "WhisperCore_iOS_Swift_Package" */;
+			productName = WhisperCore;
+		};
+		7AF4C23F2E42E5ED00D07DEC /* WhisperCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7AF4C23E2E42E5ED00D07DEC /* XCRemoteSwiftPackageReference "WhisperCore_iOS_Swift_Package" */;
+			productName = WhisperCore;
+		};
+		7AF4C2862E42EBD700D07DEC /* WhisperCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7AF4C2852E42EBD700D07DEC /* XCRemoteSwiftPackageReference "WhisperCore_iOS_Swift_Package" */;
 			productName = WhisperCore;
 		};
 /* End XCSwiftPackageProductDependency section */
