@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:stt_llm_demo/whisper/whisper.dart';
-import 'dart:io';
 
 import 'message_bubble.dart';
 
@@ -21,7 +20,8 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  bool _isLoading = true;
+  bool _isLoadingModel = true;
+  bool _isLoading = false;
   final List<MessageBubble> _messages = [];
   //final List<String> messages = [];
   final ScrollController scrollController =
@@ -34,17 +34,17 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    if (Platform.isIOS) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _initWhisper();
-      });
-    } else {
-      addMessage(
-        message: "This app only works on iOS for now",
-        sender: Sender.system.label,
-        isAI: false,
-      );
-    }
+    // if (Platform.isIOS) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initWhisper();
+    });
+    // } else {
+    //   addMessage(
+    //     message: "This app only works on iOS for now",
+    //     sender: Sender.system.label,
+    //     isAI: false,
+    //   );
+    // }
   }
 
   Future<void> _initWhisper() async {
@@ -59,6 +59,7 @@ class _MainScreenState extends State<MainScreen> {
     // });
     _whisper.listenToEvents(
       onTranscribe: (text) {
+        _isLoading = false;
         addMessage(message: text, sender: Sender.whisper.label, isAI: true);
       },
       onTranscriptionFailed: (error) {
@@ -83,7 +84,15 @@ class _MainScreenState extends State<MainScreen> {
       onStopRecording: () {
         setState(() {
           _isRecording = false;
+          _isLoading = true;
         });
+      },
+      permissionRequestNeeded: () {
+        addMessage(
+          message: "Microphone access denied",
+          sender: Sender.system.label,
+          isAI: false,
+        );
       },
       onUnknown: (event) {
         addMessage(
@@ -95,7 +104,7 @@ class _MainScreenState extends State<MainScreen> {
     );
 
     setState(() {
-      _isLoading = false;
+      _isLoadingModel = false;
     });
   }
 
@@ -121,7 +130,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   _toggleRecording() async {
-    final result = await _whisper.toggleRecording();
+    await _whisper.toggleRecording();
   }
 
   _transcribeSampleAudio() async {
@@ -143,7 +152,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    if (_isLoadingModel) {
       return Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -166,87 +175,110 @@ class _MainScreenState extends State<MainScreen> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: SafeArea(
-        child: Column(
-          // Use a Column to separate the text box from other potential UI elements
-          children: [
-            Expanded(
-              // Make the text box take available space
-              child: Container(
-                margin: const EdgeInsets.all(
-                  16.0,
-                ), // Add some margin around the box
-                padding: const EdgeInsets.all(
-                  8.0,
-                ), // Add some padding inside the box
-                child: ListView.builder(
-                  controller: scrollController, // Assign the scroll controller
-                  itemCount: _messages.length, // Number of items in our list
-                  itemBuilder: (context, index) {
-                    // Display each message from the list
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 4.0,
-                      ), // Some spacing
-                      child: _messages[index],
-                    );
-                  },
-                ),
-              ),
-            ),
-            // You could add other widgets here if needed, below the text box
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              // Use a Column to separate the text box from other potential UI elements
               children: [
-                ElevatedButton.icon(
-                  onPressed: _transcribeSampleAudio,
-                  icon: Icon(Icons.audiotrack),
-                  label: SizedBox(
-                    width: 100.0,
-                    child: Center(
-                      child: Text("Sample", style: TextStyle(fontSize: 20.0)),
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 24.0,
-                      vertical: 20.0,
-                    ),
-                    backgroundColor: Colors.indigo,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
+                Expanded(
+                  // Make the text box take available space
+                  child: Container(
+                    margin: const EdgeInsets.all(
+                      16.0,
+                    ), // Add some margin around the box
+                    padding: const EdgeInsets.all(
+                      8.0,
+                    ), // Add some padding inside the box
+                    child: ListView.builder(
+                      controller:
+                          scrollController, // Assign the scroll controller
+                      itemCount:
+                          _messages.length, // Number of items in our list
+                      itemBuilder: (context, index) {
+                        // Display each message from the list
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 4.0,
+                          ), // Some spacing
+                          child: _messages[index],
+                        );
+                      },
                     ),
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: _toggleRecording,
-                  icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-                  label: SizedBox(
-                    width: 100.0,
-                    child: Center(
-                      child: Text(
-                        _isRecording ? "Stop" : "Record",
-                        style: TextStyle(fontSize: 20.0),
+                // You could add other widgets here if needed, below the text box
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: _isLoading ? null : _transcribeSampleAudio,
+                      icon: Icon(Icons.audiotrack),
+                      label: SizedBox(
+                        width: 100.0,
+                        child: Center(
+                          child: Text(
+                            "Sample",
+                            style: TextStyle(fontSize: 20.0),
+                          ),
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24.0,
+                          vertical: 20.0,
+                        ),
+                        backgroundColor: Colors.indigo,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
                       ),
                     ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 24.0,
-                      vertical: 20.0,
+                    ElevatedButton.icon(
+                      onPressed: _isLoading ? null : _toggleRecording,
+                      icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+                      label: SizedBox(
+                        width: 100.0,
+                        child: Center(
+                          child: Text(
+                            _isRecording ? "Stop" : "Record",
+                            style: TextStyle(fontSize: 20.0),
+                          ),
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 24.0,
+                          vertical: 20.0,
+                        ),
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                      ),
                     ),
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                  ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          // Spinner overlay
+          if (_isLoading)
+            Container(
+              color: Colors.black54,
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Transcribing.."),
+                    CircularProgressIndicator(),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class WhisperFlutterBridge {
   // Method channel name — you will need to set this up on iOS native side
@@ -17,7 +18,14 @@ class WhisperFlutterBridge {
 
   /// Requests microphone permission
   static Future<void> callRequestRecordPermission() async {
-    await _methodChannel.invokeMethod('callRequestRecordPermission');
+    if (Platform.isAndroid) {
+      if (await isMicrophonePermissionGranted() == false) {
+        await checkMicrophonePermission();
+        await isMicrophonePermissionGranted();
+      }
+    } else {
+      await _methodChannel.invokeMethod('callRequestRecordPermission');
+    }
   }
 
   /// Initializes the model at given path, returns true if success
@@ -40,6 +48,7 @@ class WhisperFlutterBridge {
 
   /// Toggles recording state
   static Future<void> toggleRecording() async {
+    print('toggleRecording called');
     await _methodChannel.invokeMethod('toggleRecording');
   }
 
@@ -89,6 +98,13 @@ class WhisperFlutterBridge {
     );
     return _eventsStream!;
   }
+
+  static Future<bool> isMicrophonePermissionGranted() async {
+    final result = await _methodChannel.invokeMethod<bool>(
+      'isMicrophonePermissionGranted',
+    );
+    return result ?? false;
+  }
 }
 
 Future<String> getModelFilePath() async {
@@ -132,5 +148,25 @@ Future<String> copyAssetToDocuments({
       print('Error copying $outputFileName: $e');
     }
     rethrow;
+  }
+}
+
+Future<void> checkMicrophonePermission() async {
+  var status = await Permission.microphone.status;
+
+  if (status.isGranted) {
+    print('Microphone permission granted.');
+  } else if (status.isPermanentlyDenied) {
+    print('Microphone permission permanently denied. Open app settings.');
+    // You can prompt the user to open app settings
+    await openAppSettings();
+  } else if (status.isDenied) {
+    print('Microphone permission denied. Requesting now...');
+    var newStatus = await Permission.microphone.request();
+    if (newStatus.isGranted) {
+      print('Microphone permission granted after request.');
+    } else {
+      print('Microphone permission still denied.');
+    }
   }
 }

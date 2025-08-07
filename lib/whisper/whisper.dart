@@ -59,6 +59,8 @@ class Whisper {
     void Function(String error)? onTranscriptionFailed,
     void Function()? onStartRecording,
     void Function()? onStopRecording,
+    void Function()? permissionRequestNeeded,
+
     void Function(dynamic raw)? onUnknown,
   }) {
     WhisperFlutterBridge.events.listen((event) {
@@ -88,6 +90,10 @@ class Whisper {
           onStopRecording?.call();
           break;
 
+        case 'permissionRequestNeeded':
+          permissionRequestNeeded?.call();
+          break;
+
         default:
           onUnknown?.call(event);
       }
@@ -102,21 +108,11 @@ class Whisper {
     return true;
   }
 
-  Future<RecordingResult> toggleRecording() async {
-    if (!await WhisperFlutterBridge.canTranscribe()) {
-      return RecordingResult(false, "Unable to Transcribe");
-    }
+  Future<void> toggleRecording() async {
+    // if (!await WhisperFlutterBridge.canTranscribe()) {
+    //   return;
+    // }
     WhisperFlutterBridge.enablePlayback(false);
     await WhisperFlutterBridge.toggleRecording();
-    final isRecording = await WhisperFlutterBridge.isRecording();
-
-    return RecordingResult(isRecording);
   }
-}
-
-class RecordingResult {
-  final bool isRecording;
-  final String? message;
-
-  RecordingResult(this.isRecording, [this.message]);
 }
